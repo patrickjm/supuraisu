@@ -1095,6 +1095,12 @@
     openFilterDropdown = openFilterDropdown === name ? null : name;
   }
 
+  function handleFilterDropdownBlur(event: FocusEvent) {
+    const nextTarget = event.relatedTarget;
+    if (nextTarget instanceof Node && event.currentTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
+    openFilterDropdown = null;
+  }
+
   function toggleFilterValue(key: "genres" | "instruments" | "keys", value: string) {
     const filters = activeFilters();
     const current = filters[key];
@@ -1350,7 +1356,7 @@
               <SlidersHorizontal size={14} />
               Filters
             </div>
-            <div class="filter-dropdown">
+            <div class="filter-dropdown" onfocusout={handleFilterDropdownBlur}>
               <button type="button" class="filter-control btn btn-xs min-w-32 justify-between" class:filter-active={activeFilters().instruments.length > 0 || openFilterDropdown === "instruments"} onclick={(event) => toggleFilterDropdown("instruments", event)}>{multiLabel("Instrument", activeFilters().instruments)}</button>
               {#if openFilterDropdown === "instruments"}
                 <div class="filter-menu menu w-44">
@@ -1358,7 +1364,7 @@
                 </div>
               {/if}
             </div>
-            <div class="filter-dropdown">
+            <div class="filter-dropdown" onfocusout={handleFilterDropdownBlur}>
               <button type="button" class="filter-control btn btn-xs min-w-28 justify-between" class:filter-active={activeFilters().genres.length > 0 || openFilterDropdown === "genres"} onclick={(event) => toggleFilterDropdown("genres", event)}>{multiLabel("Genre", activeFilters().genres)}</button>
               {#if openFilterDropdown === "genres"}
                 <div class="filter-menu menu w-44">
@@ -1366,7 +1372,7 @@
                 </div>
               {/if}
             </div>
-            <div class="filter-dropdown">
+            <div class="filter-dropdown" onfocusout={handleFilterDropdownBlur}>
               <button type="button" class="filter-control btn btn-xs min-w-24 justify-between" class:filter-active={activeFilters().keys.length > 0 || openFilterDropdown === "keys"} onclick={(event) => toggleFilterDropdown("keys", event)}>{multiLabel("Key", activeFilters().keys)}</button>
               {#if openFilterDropdown === "keys"}
                 <div class="filter-menu menu w-36">
