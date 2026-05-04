@@ -608,12 +608,38 @@
     await runSearch({ term, purchasedOnly, liked: !packUuid && activeView === "liked", packUuid, page: nextPage, append: true, force: true, filters: activeFilters() });
   }
 
-  async function downloadSample(sample: SampleSummary) {
-    if (!sample.purchased) {
+  function updateSampleEverywhere(sample: SampleSummary) {
+    if (searchResult) {
+      searchResult = {
+        ...searchResult,
+        samples: searchResult.samples.map((existing) =>
+          existing.file_hash === sample.file_hash ? { ...existing, ...sample } : existing,
+        ),
+      };
+    }
+    for (const [key, entry] of sampleResultCache) {
+      if (entry.result.samples.some((existing) => existing.file_hash === sample.file_hash)) {
+        sampleResultCache.set(key, {
+          at: entry.at,
+          pagesLoaded: entry.pagesLoaded,
+          result: {
+            ...entry.result,
+            samples: entry.result.samples.map((existing) =>
+              existing.file_hash === sample.file_hash ? { ...existing, ...sample } : existing,
+            ),
+          },
+        });
+      }
+    }
+  }
+
+  async function ensureLocalSample(sample: SampleSummary, confirmUnpurchased = true) {
+    if (sample.local_path) return sample;
+    if (!sample.purchased && confirmUnpurchased) {
       const ok = window.confirm(
         `This sample appears unpurchased and may use ${sample.price} Splice credit${sample.price === 1 ? "" : "s"}. Continue?`,
       );
-      if (!ok) return;
+      if (!ok) return null;
     }
 
     downloadingHash = sample.file_hash;
@@ -622,35 +648,20 @@
       const result = await invoke<{ requested: boolean; sample?: SampleSummary }>("download_splice_sample", {
         fileHash: sample.file_hash,
       });
-      if (result.sample && searchResult) {
-        const updated = {
-          ...searchResult,
-          samples: searchResult.samples.map((existing) =>
-            existing.file_hash === sample.file_hash ? { ...existing, ...result.sample } : existing,
-          ),
-        };
-        searchResult = updated;
-        for (const [key, entry] of sampleResultCache) {
-          if (entry.result.samples.some((existing) => existing.file_hash === sample.file_hash)) {
-            sampleResultCache.set(key, {
-              at: entry.at,
-              pagesLoaded: entry.pagesLoaded,
-              result: {
-                ...entry.result,
-                samples: entry.result.samples.map((existing) =>
-                  existing.file_hash === sample.file_hash ? { ...existing, ...result.sample } : existing,
-                ),
-              },
-            });
-          }
-        }
-      }
+      const updated = result.sample ? { ...sample, ...result.sample } : sample;
+      updateSampleEverywhere(updated);
       await loadAccount();
+      return updated;
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
+      return null;
     } finally {
       downloadingHash = null;
     }
+  }
+
+  async function downloadSample(sample: SampleSummary) {
+    await ensureLocalSample(sample, true);
   }
 
   async function startFileDrag(event: PointerEvent, sample: SampleSummary) {
@@ -768,9 +779,19 @@
 
   async function play(sample: SampleSummary) {
     if (sample.preview_url?.includes("-scrambled/") && !sample.local_path) {
-      previewFailures = previewFailures.includes(sample.file_hash) ? previewFailures : [...previewFailures, sample.file_hash];
-      error = "Remote preview is scrambled for this sample. Download it first to preview the real local audio.";
-      return;
+      if (sample.purchased) {
+        const localSample = await ensureLocalSample(sample, false);
+        if (!localSample?.local_path) {
+          previewFailures = previewFailures.includes(sample.file_hash) ? previewFailures : [...previewFailures, sample.file_hash];
+          error = "This library sample has a scrambled remote preview and could not be downloaded for local playback.";
+          return;
+        }
+        sample = localSample;
+      } else {
+        previewFailures = previewFailures.includes(sample.file_hash) ? previewFailures : [...previewFailures, sample.file_hash];
+        error = "Remote preview is scrambled for this sample. Download it first to preview the real local audio.";
+        return;
+      }
     }
     if (!sample.local_path && !sample.preview_url) return;
     if (playingHash === sample.file_hash) {
