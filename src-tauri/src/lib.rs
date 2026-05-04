@@ -1085,6 +1085,16 @@ async fn probe_splice_helper() -> Result<HelperProbeResult, String> {
     })
 }
 
+fn normalize_search_query(query: &str) -> String {
+    let trimmed = query.trim();
+    for ext in [".wav", ".aif", ".aiff", ".mp3"] {
+        if trimmed.to_ascii_lowercase().ends_with(ext) {
+            return trimmed[..trimmed.len() - ext.len()].to_string();
+        }
+    }
+    trimmed.to_string()
+}
+
 #[tauri::command]
 async fn search_splice_samples(
     query: String,
@@ -1123,7 +1133,7 @@ async fn search_splice_samples(
             liked: liked.unwrap_or(false),
             purchased: purchased as i32,
             matching_tags_and_packs: true,
-            search_term: query,
+            search_term: normalize_search_query(&query),
             collection_uuid: String::new(),
             sort_fn: sort_fn.unwrap_or_default(),
             bpm_min: bpm_min.unwrap_or_default(),
