@@ -92,6 +92,11 @@
     preferences?: { splice_folder_path: string; sample_import_directories: string[] };
   };
 
+  type WasmCandidate = {
+    path: string;
+    bytes: number[];
+  };
+
   type SampleSummary = {
     file_hash: string;
     filename: string;
@@ -721,11 +726,29 @@
           fd_seek: () => 0,
         },
       };
-      const wasmBytes = await fetch("/splice-audio.wasm").then((response) => response.arrayBuffer());
-      const wasm = await WebAssembly.instantiate(wasmBytes, imports);
-      memory = wasm.instance.exports.memory as WebAssembly.Memory;
-      (wasm.instance.exports.__initialize__ as (() => void) | undefined)?.();
-      return { instance: wasm.instance, memory };
+      const requiredExports = [
+        "_ZN15SpliceAssetData11isScrambledEPKcm",
+        "_ZN15SpliceAssetData19descrambleAudioDataEPKcm",
+        "_ZN15SpliceAssetData4dataEv",
+        "_ZN15SpliceAssetData4sizeEv",
+      ];
+      const candidates = await invoke<WasmCandidate[]>("splice_decoder_wasm_candidates");
+      let lastError = "No compatible Splice decoder WASM found.";
+      for (const candidate of candidates) {
+        try {
+          const wasmBytes = new Uint8Array(candidate.bytes);
+          const module = await WebAssembly.compile(wasmBytes);
+          const exports = WebAssembly.Module.exports(module).map((entry) => entry.name);
+          if (!requiredExports.every((name) => exports.includes(name))) continue;
+          const instance = await WebAssembly.instantiate(module, imports);
+          memory = instance.exports.memory as WebAssembly.Memory;
+          (instance.exports.__initialize__ as (() => void) | undefined)?.();
+          return { instance, memory };
+        } catch (e) {
+          lastError = e instanceof Error ? e.message : String(e);
+        }
+      }
+      throw new Error(lastError);
     })();
     return previewWasmPromise;
   }
@@ -778,21 +801,6 @@
   }
 
   async function play(sample: SampleSummary) {
-    if (sample.preview_url?.includes("-scrambled/") && !sample.local_path) {
-      if (sample.purchased) {
-        const localSample = await ensureLocalSample(sample, false);
-        if (!localSample?.local_path) {
-          previewFailures = previewFailures.includes(sample.file_hash) ? previewFailures : [...previewFailures, sample.file_hash];
-          error = "This library sample has a scrambled remote preview and could not be downloaded for local playback.";
-          return;
-        }
-        sample = localSample;
-      } else {
-        previewFailures = previewFailures.includes(sample.file_hash) ? previewFailures : [...previewFailures, sample.file_hash];
-        error = "Remote preview is scrambled for this sample. Download it first to preview the real local audio.";
-        return;
-      }
-    }
     if (!sample.local_path && !sample.preview_url) return;
     if (playingHash === sample.file_hash) {
       stopPlayback();
@@ -808,7 +816,27 @@
     try {
       source = await previewSource(sample);
     } catch (e) {
-      if (sample.preview_url && !sample.local_path) {
+      if (sample.preview_url?.includes("-scrambled/") && !sample.local_path) {
+        if (sample.purchased) {
+          const localSample = await ensureLocalSample(sample, false);
+          if (localSample?.local_path) {
+            sample = localSample;
+            source = await previewSource(localSample);
+          } else {
+            if (nonce !== playbackNonce) return;
+            if (!previewFailures.includes(sample.file_hash)) previewFailures = [...previewFailures, sample.file_hash];
+            error = "Could not decode this scrambled preview or download the local library file.";
+            preparingHash = null;
+            return;
+          }
+        } else {
+          if (nonce !== playbackNonce) return;
+          if (!previewFailures.includes(sample.file_hash)) previewFailures = [...previewFailures, sample.file_hash];
+          error = e instanceof Error ? e.message : String(e);
+          preparingHash = null;
+          return;
+        }
+      } else if (sample.preview_url && !sample.local_path) {
         source = sample.preview_url;
       } else {
         if (nonce !== playbackNonce) return;

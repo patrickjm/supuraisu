@@ -12,6 +12,7 @@ use std::sync::OnceLock;
 use std::{
     collections::HashMap,
     future::Future,
+    fs,
     io,
     path::{Path, PathBuf},
     pin::Pin,
@@ -255,6 +256,12 @@ struct CollectionSummary {
 struct DownloadSampleResult {
     requested: bool,
     sample: Option<SampleSummary>,
+}
+
+#[derive(Debug, Serialize)]
+struct WasmCandidate {
+    path: String,
+    bytes: Vec<u8>,
 }
 
 #[derive(Debug, Serialize)]
@@ -1799,6 +1806,68 @@ async fn supuraisu_diagnostics() -> Result<DiagnosticsInfo, String> {
     })
 }
 
+fn collect_asar_wasm_entries(prefix: &str, node: &serde_json::Value, out: &mut Vec<(String, u64, usize)>) {
+    let Some(files) = node.get("files").and_then(|value| value.as_object()) else {
+        return;
+    };
+    for (name, child) in files {
+        let path = if prefix.is_empty() { format!("/{name}") } else { format!("{prefix}/{name}") };
+        if path.ends_with(".wasm") {
+            if let (Some(offset), Some(size)) = (
+                child.get("offset").and_then(|value| value.as_str()).and_then(|value| value.parse::<u64>().ok()),
+                child.get("size").and_then(|value| value.as_u64()).and_then(|value| usize::try_from(value).ok()),
+            ) {
+                out.push((path.clone(), offset, size));
+            }
+        }
+        collect_asar_wasm_entries(&path, child, out);
+    }
+}
+
+fn read_asar_wasm_candidates(asar_path: &Path) -> Result<Vec<WasmCandidate>, String> {
+    let bytes = fs::read(asar_path).map_err(|e| format!("Could not read {}: {e}", asar_path.display()))?;
+    if bytes.len() < 16 {
+        return Err(format!("{} is too small to be an ASAR archive", asar_path.display()));
+    }
+    let header_size = u32::from_le_bytes(bytes[4..8].try_into().map_err(|_| "Invalid ASAR header".to_string())?) as usize;
+    let json_size = u32::from_le_bytes(bytes[12..16].try_into().map_err(|_| "Invalid ASAR header".to_string())?) as usize;
+    let json_end = 16usize.checked_add(json_size).ok_or_else(|| "Invalid ASAR header size".to_string())?;
+    if json_end > bytes.len() {
+        return Err(format!("{} has an invalid ASAR header", asar_path.display()));
+    }
+    let header: serde_json::Value = serde_json::from_slice(&bytes[16..json_end]).map_err(|e| format!("Could not parse ASAR header: {e}"))?;
+    let data_start = 8usize.checked_add(header_size).ok_or_else(|| "Invalid ASAR data offset".to_string())?;
+    let mut entries = Vec::new();
+    collect_asar_wasm_entries("", &header, &mut entries);
+    entries.sort_by_key(|(path, _, _)| {
+        if path.starts_with("/desktop-main/") || path.starts_with("/desktop-companion/") {
+            0
+        } else {
+            1
+        }
+    });
+
+    let mut candidates = Vec::new();
+    for (path, offset, size) in entries.into_iter().take(12) {
+        let start = data_start.checked_add(usize::try_from(offset).map_err(|_| "Invalid ASAR file offset".to_string())?).ok_or_else(|| "Invalid ASAR file range".to_string())?;
+        let end = start.checked_add(size).ok_or_else(|| "Invalid ASAR file range".to_string())?;
+        if end <= bytes.len() {
+            candidates.push(WasmCandidate { path, bytes: bytes[start..end].to_vec() });
+        }
+    }
+    Ok(candidates)
+}
+
+#[tauri::command]
+async fn splice_decoder_wasm_candidates() -> Result<Vec<WasmCandidate>, String> {
+    let asar_path = PathBuf::from("/Applications/Splice.app/Contents/Resources/app.asar");
+    let candidates = read_asar_wasm_candidates(&asar_path)?;
+    if candidates.is_empty() {
+        return Err("No WASM files found in the installed Splice app".to_string());
+    }
+    Ok(candidates)
+}
+
 #[tauri::command]
 async fn supuraisu_auth_login(app: tauri::AppHandle, keychain_consent: bool) -> Result<(), String> {
     if !keychain_consent {
@@ -1914,6 +1983,7 @@ pub fn run() {
             reveal_in_finder,
             read_local_audio_bytes,
             fetch_preview_bytes,
+            splice_decoder_wasm_candidates,
             start_file_drag
         ])
         .run(tauri::generate_context!())
