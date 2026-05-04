@@ -59,6 +59,6 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: Supuraisu ${{ github.ref_name }}
           releaseBody: See CHANGELOG.md for changes.
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: --target universal-apple-darwin --bundles app,dmg

@@ -2,6 +2,10 @@
 
 All notable Supuraisu changes should be documented here.
 
+## 0.1.1
+
+- Enable signed Tauri updater configuration and release metadata.
+
 ## 0.1.0
 
 Initial macOS-focused development release.

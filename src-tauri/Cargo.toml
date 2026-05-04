@@ -1,6 +1,6 @@
 [package]
 name = "supuraisu"
-version = "0.1.0"
+version = "0.1.1"
 description = "A better desktop client for legitimate Splice users"
 authors = ["Patrick Moriarty"]
 edition = "2021"

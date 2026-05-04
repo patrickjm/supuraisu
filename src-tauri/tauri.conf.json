@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Supuraisu",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "com.patrickmoriarty.supuraisu",
   "build": {
     "beforeDevCommand": "bun run dev",
@@ -23,8 +23,10 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "",
-      "endpoints": []
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM2NUM1MkJFRjQ4MEZDMTAKUldRUS9JRDB2bEpjeGg0d1dhQ0dGajhGWlc2bmdva1dBa00rbjRWRmZOeEdnY2ZUMFk1bzlmNU4K",
+      "endpoints": [
+        "https://github.com/patrickjm/supuraisu/releases/latest/download/latest.json"
+      ]
     }
   },
   "bundle": {
@@ -37,6 +39,7 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true
   }
 }
