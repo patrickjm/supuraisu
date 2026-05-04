@@ -26,6 +26,9 @@ jobs:
         with:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
 
+      - name: Install system dependencies
+        run: brew install protobuf
+
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
