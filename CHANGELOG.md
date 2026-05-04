@@ -2,6 +2,18 @@
 
 All notable Supuraisu changes should be documented here.
 
+## 0.1.3
+
+- Add experimental scrambled preview decoding using the user's installed Splice.app WASM at runtime.
+- Show decoder/WASM integration status in About diagnostics.
+- Fix compact filter dropdown behavior.
+- Improve filename searches by ignoring audio extensions.
+- Auto-download purchased library samples as a fallback when scrambled preview decoding is unavailable.
+
+## 0.1.2
+
+- Configure macOS ad-hoc app signing for more consistent test bundles.
+
 ## 0.1.1
 
 - Enable signed Tauri updater configuration and release metadata.
