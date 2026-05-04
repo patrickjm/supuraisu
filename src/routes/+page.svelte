@@ -59,6 +59,16 @@
     errors: string[];
   };
 
+  type DecoderDiagnostics = {
+    checked: boolean;
+    status: "loading" | "ready" | "missing" | "incompatible" | "error";
+    candidate_count: number;
+    compatible_path: string;
+    compatible_size: number;
+    candidate_paths: string[];
+    error: string;
+  };
+
   type DiagnosticsInfo = {
     app_version: string;
     keychain_consent: boolean;
@@ -194,6 +204,7 @@
   let error = $state<string | null>(null);
   let diagnosticsOpen = $state(false);
   let diagnostics = $state<DiagnosticsInfo | null>(null);
+  let decoderDiagnostics = $state<DecoderDiagnostics | null>(null);
   let loadingDiagnostics = $state(false);
 
   let audio: HTMLAudioElement | null = null;
@@ -282,11 +293,68 @@
     }
   }
 
+  async function inspectDecoderWasm(): Promise<DecoderDiagnostics> {
+    const requiredExports = [
+      "_ZN15SpliceAssetData11isScrambledEPKcm",
+      "_ZN15SpliceAssetData19descrambleAudioDataEPKcm",
+      "_ZN15SpliceAssetData4dataEv",
+      "_ZN15SpliceAssetData4sizeEv",
+    ];
+    try {
+      const candidates = await invoke<WasmCandidate[]>("splice_decoder_wasm_candidates");
+      let lastError = "No candidate exposed the required decoder symbols.";
+      for (const candidate of candidates) {
+        try {
+          const module = await WebAssembly.compile(new Uint8Array(candidate.bytes));
+          const exports = WebAssembly.Module.exports(module).map((entry) => entry.name);
+          if (requiredExports.every((name) => exports.includes(name))) {
+            return {
+              checked: true,
+              status: "ready",
+              candidate_count: candidates.length,
+              compatible_path: candidate.path,
+              compatible_size: candidate.bytes.length,
+              candidate_paths: candidates.map((item) => item.path),
+              error: "",
+            };
+          }
+        } catch (e) {
+          lastError = e instanceof Error ? e.message : String(e);
+        }
+      }
+      return {
+        checked: true,
+        status: candidates.length ? "incompatible" : "missing",
+        candidate_count: candidates.length,
+        compatible_path: "",
+        compatible_size: 0,
+        candidate_paths: candidates.map((item) => item.path),
+        error: lastError,
+      };
+    } catch (e) {
+      return {
+        checked: true,
+        status: "error",
+        candidate_count: 0,
+        compatible_path: "",
+        compatible_size: 0,
+        candidate_paths: [],
+        error: e instanceof Error ? e.message : String(e),
+      };
+    }
+  }
+
   async function openDiagnostics() {
     diagnosticsOpen = true;
     loadingDiagnostics = true;
+    decoderDiagnostics = { checked: false, status: "loading", candidate_count: 0, compatible_path: "", compatible_size: 0, candidate_paths: [], error: "" };
     try {
-      diagnostics = await invoke<DiagnosticsInfo>("supuraisu_diagnostics");
+      const [appDiagnostics, decoder] = await Promise.all([
+        invoke<DiagnosticsInfo>("supuraisu_diagnostics"),
+        inspectDecoderWasm(),
+      ]);
+      diagnostics = appDiagnostics;
+      decoderDiagnostics = decoder;
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
     } finally {
@@ -1641,6 +1709,34 @@
                 <dt>Cert</dt><dd>{diagnostics.environment.cert_exists ? "OK" : "Missing"} · {diagnostics.environment.cert_path ?? "—"}</dd>
                 <dt>Key</dt><dd>{diagnostics.environment.key_exists ? "OK" : "Missing"} · {diagnostics.environment.key_path ?? "—"}</dd>
                 <dt>gRPC scan</dt><dd>{diagnostics.environment.grpc_port_start}–{diagnostics.environment.grpc_port_end}</dd>
+              </dl>
+            </section>
+            <section class="rounded-box border border-base-300 bg-base-200/40 p-3">
+              <h3 class="mb-2 font-black uppercase tracking-wide text-base-content/60">Scrambled previews</h3>
+              <dl class="grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1 break-all">
+                <dt>Decoder</dt>
+                <dd>
+                  {#if decoderDiagnostics?.status === "ready"}
+                    Ready · using installed Splice WASM
+                  {:else if decoderDiagnostics?.status === "loading"}
+                    Checking…
+                  {:else if decoderDiagnostics?.status === "missing"}
+                    Missing
+                  {:else if decoderDiagnostics?.status === "incompatible"}
+                    Incompatible
+                  {:else}
+                    Error
+                  {/if}
+                </dd>
+                <dt>Candidates</dt><dd>{decoderDiagnostics?.candidate_count ?? 0}</dd>
+                <dt>Active WASM</dt><dd>{decoderDiagnostics?.compatible_path || "—"}</dd>
+                <dt>Size</dt><dd>{decoderDiagnostics?.compatible_size ? `${(decoderDiagnostics.compatible_size / 1024 / 1024).toFixed(2)} MB` : "—"}</dd>
+                {#if decoderDiagnostics?.candidate_paths.length}
+                  <dt>Found</dt><dd>{decoderDiagnostics.candidate_paths.slice(0, 4).join(", ")}</dd>
+                {/if}
+                {#if decoderDiagnostics?.error}
+                  <dt>Error</dt><dd>{decoderDiagnostics.error}</dd>
+                {/if}
               </dl>
             </section>
             {#if diagnostics.errors.length}
