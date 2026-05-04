@@ -767,6 +767,11 @@
   }
 
   async function play(sample: SampleSummary) {
+    if (sample.preview_url?.includes("-scrambled/") && !sample.local_path) {
+      previewFailures = previewFailures.includes(sample.file_hash) ? previewFailures : [...previewFailures, sample.file_hash];
+      error = "Remote preview is scrambled for this sample. Download it first to preview the real local audio.";
+      return;
+    }
     if (!sample.local_path && !sample.preview_url) return;
     if (playingHash === sample.file_hash) {
       stopPlayback();
@@ -968,6 +973,11 @@
     openFilterDropdown = null;
   }
 
+  function toggleFilterDropdown(name: "instruments" | "genres" | "keys", event: MouseEvent) {
+    event.stopPropagation();
+    openFilterDropdown = openFilterDropdown === name ? null : name;
+  }
+
   function toggleFilterValue(key: "genres" | "instruments" | "keys", value: string) {
     const filters = activeFilters();
     const current = filters[key];
@@ -1108,9 +1118,7 @@
       </div>
     </header>
 
-    {#if openFilterDropdown}
-      <button class="fixed inset-0 z-10 cursor-default" aria-label="Close filters" onclick={closeFilterDropdowns}></button>
-    {/if}
+
     <main class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2 pb-14">
       {#if error}
         <div class="alert alert-error mb-3 py-2 text-sm">
@@ -1226,25 +1234,25 @@
               Filters
             </div>
             <div class="dropdown dropdown-bottom relative z-20">
-              <button class="filter-control btn btn-xs min-w-32 justify-between" class:filter-active={activeFilters().instruments.length > 0 || openFilterDropdown === "instruments"} onclick={() => openFilterDropdown = openFilterDropdown === "instruments" ? null : "instruments"}>{multiLabel("Instrument", activeFilters().instruments)}</button>
+              <button class="filter-control btn btn-xs min-w-32 justify-between" class:filter-active={activeFilters().instruments.length > 0 || openFilterDropdown === "instruments"} onclick={(event) => toggleFilterDropdown("instruments", event)}>{multiLabel("Instrument", activeFilters().instruments)}</button>
               {#if openFilterDropdown === "instruments"}
-                <div class="menu dropdown-content z-20 mt-1 w-44 rounded-box border border-base-300 bg-base-100 p-1 shadow">
+                <div class="menu dropdown-content z-50 mt-1 w-44 rounded-box border border-base-300 bg-base-100 p-1 shadow-xl">
                   {#each instruments as item}<label class="label cursor-pointer justify-start gap-2 px-2 py-1 text-xs"><input type="checkbox" class="checkbox checkbox-xs checkbox-primary" checked={activeFilters().instruments.includes(item)} onchange={() => toggleFilterValue("instruments", item)} />{item}</label>{/each}
                 </div>
               {/if}
             </div>
             <div class="dropdown dropdown-bottom relative z-20">
-              <button class="filter-control btn btn-xs min-w-28 justify-between" class:filter-active={activeFilters().genres.length > 0 || openFilterDropdown === "genres"} onclick={() => openFilterDropdown = openFilterDropdown === "genres" ? null : "genres"}>{multiLabel("Genre", activeFilters().genres)}</button>
+              <button class="filter-control btn btn-xs min-w-28 justify-between" class:filter-active={activeFilters().genres.length > 0 || openFilterDropdown === "genres"} onclick={(event) => toggleFilterDropdown("genres", event)}>{multiLabel("Genre", activeFilters().genres)}</button>
               {#if openFilterDropdown === "genres"}
-                <div class="menu dropdown-content z-20 mt-1 w-44 rounded-box border border-base-300 bg-base-100 p-1 shadow">
+                <div class="menu dropdown-content z-50 mt-1 w-44 rounded-box border border-base-300 bg-base-100 p-1 shadow-xl">
                   {#each genres as item}<label class="label cursor-pointer justify-start gap-2 px-2 py-1 text-xs"><input type="checkbox" class="checkbox checkbox-xs checkbox-primary" checked={activeFilters().genres.includes(item)} onchange={() => toggleFilterValue("genres", item)} />{item}</label>{/each}
                 </div>
               {/if}
             </div>
             <div class="dropdown dropdown-bottom relative z-20">
-              <button class="filter-control btn btn-xs min-w-24 justify-between" class:filter-active={activeFilters().keys.length > 0 || openFilterDropdown === "keys"} onclick={() => openFilterDropdown = openFilterDropdown === "keys" ? null : "keys"}>{multiLabel("Key", activeFilters().keys)}</button>
+              <button class="filter-control btn btn-xs min-w-24 justify-between" class:filter-active={activeFilters().keys.length > 0 || openFilterDropdown === "keys"} onclick={(event) => toggleFilterDropdown("keys", event)}>{multiLabel("Key", activeFilters().keys)}</button>
               {#if openFilterDropdown === "keys"}
-                <div class="menu dropdown-content z-20 mt-1 w-36 rounded-box border border-base-300 bg-base-100 p-1 shadow">
+                <div class="menu dropdown-content z-50 mt-1 w-36 rounded-box border border-base-300 bg-base-100 p-1 shadow-xl">
                   {#each keys as item}<label class="label cursor-pointer justify-start gap-2 px-2 py-1 text-xs"><input type="checkbox" class="checkbox checkbox-xs checkbox-primary" checked={activeFilters().keys.includes(item)} onchange={() => toggleFilterValue("keys", item)} />{item}</label>{/each}
                 </div>
               {/if}
