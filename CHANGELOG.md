@@ -2,6 +2,11 @@
 
 All notable Supuraisu changes should be documented here.
 
+## 0.1.4
+
+- Fix filter dropdown rendering and close behavior.
+- Close filter dropdowns when clicking outside or pressing Escape.
+
 ## 0.1.3
 
 - Add experimental scrambled preview decoding using the user's installed Splice.app WASM at runtime.
