@@ -1,0 +1,739 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "github.com/splice/platform/desktop/core/proto";
+
+message LogoutRequest {
+}
+
+message LogoutResponse {
+}
+
+message ValidateLoginRequest {
+}
+
+message ValidateLoginResponse {
+  User User = 1;
+}
+
+message GetSessionRequest {
+}
+
+message GetSessionResponse {
+  Auth Auth = 1;
+}
+
+enum AuthType {
+  SPLICE = 0;
+  AUTH0 = 1;
+}
+
+message Auth {
+  string Token = 1;
+  string SubKey = 2;
+  string SubChannel = 3;
+  AuthType AuthType = 4;
+}
+
+message User {
+  uint64 ID = 1;
+  string Username = 2;
+  string Bio = 3;
+  string AvatarURL = 4;
+  string Location = 5;
+  string Email = 6;
+  string SoundsStatus = 7;
+  uint64 Credits = 8;
+  map<string, bool> Features = 9;
+  int32 SoundsPlan = 10;
+  string UUID = 11;
+}
+
+message LoggedInRequest {
+  Auth Auth = 1;
+  User User = 2;
+}
+
+message LoggedInResponse {}
+
+message UpdatedSessionRequest{
+  Auth auth = 1;
+  User user = 2;
+}
+
+message UpdatedSessionResponse {
+}
+
+message ListSamplesRequest {
+  int32 NextToken = 1;
+}
+
+message ListSamplesResponse {
+  int32 NextToken = 1;
+  repeated Sample Samples = 2;
+}
+
+message SampleInfoRequest {
+  string LocalPath = 1; // pick one or more of the following
+  string FileHash = 2;
+  string AudioHash = 3;
+}
+
+message SampleInfoResponse {
+  Sample Sample = 1;
+}
+
+message ImportedSampleInfoResponse {
+  ImportedSample Sample = 1;
+}
+
+message ListSamplePacksRequest {
+  int32 NextToken = 1;
+}
+
+message ListSamplePacksResponse {
+  int32 NextToken = 1;
+  repeated SamplePack SamplePacks = 2;
+}
+
+message DownloadSampleRequest {
+  string FileHash = 1;
+}
+
+message DownloadSampleResponse {
+}
+
+message SyncSoundsRequest {
+}
+
+message SyncSoundsResponse {
+}
+
+message CancelSampleDownloadRequest {
+  string FileHash = 1;
+}
+
+message CancelSampleDownloadResponse {
+}
+
+message SearchSampleRequest {
+  enum PurchasedTypes {
+    All = 0;
+    OnlyPurchased = 1;
+    NotPurchased = 2;
+  }
+
+  bool Liked = 1;
+  PurchasedTypes Purchased = 2;
+  bool MatchingTagsAndPacks = 3;
+  string SearchTerm = 4;
+  string CollectionUUID = 5;
+  string SortFn = 6;
+	int32 BPMMin = 7;
+  int32 BPMMax = 8;
+  repeated string Tags = 9;
+  string FileHash = 10;
+  string Genre = 11;
+  string Instrument = 12;
+  string Key = 13;
+  string SampleType = 14;
+  string PackUUID = 15;
+  string ChordType = 16;
+  int32 PerPage = 17;
+  int32 Page = 18;
+  string RandomSeed = 19;
+}
+
+message SearchSampleResponse {
+  int32 TotalHits = 1;
+  repeated Sample Samples = 2;
+  repeated SamplePack MatchingPacks = 3;
+  map<string, int32> MatchingTags = 4;
+}
+
+enum SampleType {
+  All = 0;
+  Loop = 1;
+  OneShot = 2;
+}
+
+message Sample {
+  string LocalPath = 1;
+  string FileHash = 2;
+  string Filename = 3;
+  string AudioHash = 4;
+  int64 ModifiedTime = 5;
+  bool IsPremium = 6;
+  string AudioKey = 8;
+	int64 BPM = 9;
+	string ChordType = 10;
+	string Dir = 11;
+	int64 Duration = 12;
+	string Genre = 13;
+	string PreviewURL = 14;
+	int64 Price = 15;
+	string ProviderName = 16;
+	string ProviderUuid = 17;
+	string ProviderPermalink = 18;
+	string SampleType = 19;
+	repeated string Tags = 20;
+	string WaveformURL = 21;
+	bool Published = 22;
+	int64 Popularity = 23;
+	int64 PublishedAt = 24;
+	int64 PurchasedAt = 25;
+  string PackUUID = 26;
+}
+
+message ImportedSample {
+  string LocalPath = 1;
+  string Filename = 2;
+  string AudioHash = 3;
+  bool IsPremium = 4;
+  string AudioKey = 5;
+	int64 BPM = 6;
+	string ChordType = 7;
+	string Dir = 8;
+	int64 Duration = 9;
+	string Genre = 10;
+	string SampleType = 11;
+	repeated string Tags = 12;
+  string PackUUID = 13;
+  bool FileExists = 14;
+}
+
+message SamplePack {
+  string UUID = 1;
+  string Name = 2;
+  string CoverURL = 3;
+  string Genre = 4;
+  string Permalink = 5;
+  string ProviderName = 6;
+}
+
+
+message PCMWavFile {
+  string Path = 1;
+  int32 Channels = 2;
+  int32 SampleRate = 3;
+  int32 BitDepth = 4;
+}
+
+message ConvertToWavRequest {
+  string Path = 1;
+}
+
+message ConvertToWavResponse {
+  PCMWavFile WavFile = 1;
+}
+
+message ListPluginsRequest {
+}
+
+message ListPluginsResponse {
+  repeated Plugin Plugins = 1;
+}
+
+message RefreshPluginsRequest {
+}
+
+message RefreshPluginsResponse {
+}
+
+message InstallPluginRequest {
+  string UUID = 1;
+  string Name = 2;
+}
+
+message InstallPluginResponse {
+}
+
+message UpdatePluginRequest {
+  string UUID = 1;
+  string Name = 2;
+  string Version = 3;
+}
+
+message UpdatePluginResponse {
+}
+
+message CancelPluginDownloadRequest {
+  string UUID = 1;
+}
+
+message CancelPluginDownloadResponse {
+}
+
+message Plugin {
+  string UUID = 1;
+  string Name = 2;
+  string Author = 3;
+  string Version = 4;
+  string Image = 5;
+  string PlanStatus = 6;
+  bool IsInstalled = 7;
+  string InstallationPath = 8;
+  string InstallURL = 9;
+  string UpdateURL = 10;
+  string UpdateVersion = 11;
+  bool IsSplice = 12;
+}
+
+message UserPreferences {
+  reserved 3,4,5;
+  string SpliceFolderPath = 1;
+  bool SaveOutsideSpliceFolder = 2;
+  repeated string SampleImportDirectories = 7;
+  map<string, PresetConfigEntry> Presets = 8;
+}
+
+message PresetConfigEntry {
+  string Path = 1;
+}
+
+message UserPreferencesRequest {
+}
+
+message UserPreferencesResponse {
+  UserPreferences Preferences = 1;
+}
+
+message UpdateUserPreferencesRequest {
+  UserPreferences Preferences = 1;
+}
+
+message UpdateUserPreferencesResponse {
+}
+
+message DownloadLogsRequest {
+}
+
+message DownloadLogsResponse {
+  string Filename = 1;
+}
+
+message CopyFileToClipboardRequest {
+  string Filename = 1;
+}
+
+message CopyFileToClipboardResponse {
+}
+
+message ProjectDiskScanRequest {
+}
+
+message ProjectDiskScanResponse {
+}
+
+message CancelProjectDiskScanRequest {
+}
+
+message CancelProjectDiskScanResponse {
+}
+
+message ShutdownRequest {
+}
+
+message ShutdownResponse {
+}
+
+message ConvertSoundsTrialRequest {
+}
+
+message ConvertSoundsTrialResponse {
+}
+
+message SendFeedbackRequest {
+  string Text = 1;
+}
+
+message SendFeedbackResponse {
+}
+
+message InstallAppFromChannelRequest {
+  string Channel = 1;
+}
+
+message InstallAppFromChannelResponse {
+}
+
+message Event {
+  string Name = 1;
+  string Data = 2;
+}
+
+message ImportedAddDirectoryRequest {
+  string Path = 1;
+}
+
+message ImportedAddDirectoryResponse {
+}
+
+message ImportedSearchSamplesRequest {
+  string Text = 1;
+  repeated string Tags = 2;
+  string AudioKey = 3;
+  string ChordType = 4;
+  SampleType Loop = 5;
+  int32 MinBPM = 6;
+  int32 MaxBPM = 7;
+  int32 From = 8;
+  int32 Size = 9;
+}
+
+message ImportedListSamplesResponse {
+  repeated ImportedSample Results = 1;
+  map<string, int32> Tags = 2;
+  int32 TotalResults = 3;
+  int32 NextToken = 4;
+}
+
+message ImportedListSamplesRequest {
+  int32 From = 1;
+  int32 Size = 2;
+}
+
+message ImportedCancelAddDirectoryRequest {
+  string Directory = 1;
+}
+
+message ImportedCancelAddDirectoryResponse {
+}
+
+message ImportedDeleteSampleMetadataRequest {
+  string LocalPath = 1;
+}
+
+message ImportedDeleteSampleMetadataResponse {
+}
+
+message ImportedListTagsRequest {
+  int32 From = 1;
+  int32 Size = 2;
+}
+
+message ImportedListTagsResponse {
+  map<string, int32> Tags = 1;
+  int32 NextToken = 2;
+}
+
+message SamplePackInfoRequest {
+  string UUID = 1;
+}
+
+message SamplePackInfoResponse {
+ SamplePack Pack = 1;
+}
+
+message ImportedMatchSetPausedStatusRequest {
+  bool Paused = 1;
+}
+
+message ImportedMatchSetPausedStatusResponse {
+}
+
+message ImportedMatchGetProgressRequest {
+}
+
+message ImportedMatchGetProgressResponse {
+  int32 total = 1;
+  int32 current = 2;
+  string status = 3;
+}
+
+message ImportedRescanRequest {
+
+}
+message ImportedRescanResponse {
+
+}
+
+// Collections
+message CollectionAddRequest {
+  string Name = 1;
+}
+
+message CollectionAddResponse {
+  Collection Collection = 1;
+}
+
+message CollectionsListRequest {
+  int32 Page = 1;
+  int32 PerPage = 2;
+}
+
+message CollectionsListResponse {
+  int32 TotalCount = 1;
+  repeated Collection Collections = 2;
+}
+
+message CollectionAddItemsRequest {
+  string UUID = 1;
+  repeated string Samples = 2;
+}
+
+message CollectionAddItemsResponse {
+
+}
+
+message CollectionDeleteItemsRequest {
+  string UUID = 1;
+  repeated string Samples = 2;
+}
+
+message CollectionDeleteItemsResponse {
+
+}
+
+message CollectionUpdateRequest {
+  string UUID = 1;
+  string Name = 2;
+  string Description = 3;
+  CollectionAccess Access = 4;
+}
+
+message CollectionUpdateResponse {
+  Collection Collection = 1;
+}
+
+message CollectionDeleteRequest {
+  string UUID = 1;
+}
+
+message CollectionDeleteResponse {
+
+}
+
+enum CollectionAccess {
+  AccessNotSpecified = 0;
+  AccessPrivate = 1;
+  AccessPublic = 2;
+}
+
+message CollectionCreator {
+  int32 ID = 1;
+  string Username = 2;
+  string AvatarURL = 3;
+}
+
+message Collection {
+  string UUID = 1;
+  string Name = 2;
+  string Description = 3;
+  CollectionAccess Access = 4;
+  string Permalink = 5;
+  string CoverURL = 6;
+  int32 SampleCount = 7;
+  int32 PresetCount = 8;
+  int32 PackCount = 9;
+  int32 SubscriptionCount = 10;
+  bool CreatedByCurrentUser = 11;
+  CollectionCreator Creator = 12;
+  string CreatedAt = 13;
+  string UpdatedAt = 14;
+}
+
+message CollectionListSamplesRequest {
+  string UUID = 1;
+  int32 Page = 2;
+  int32 PerPage = 3;
+}
+
+message CollectionSample {
+  string LocalPath = 1;
+  string FileHash = 2;
+  string Filename = 3;
+  string AudioHash = 4;
+  int64 ModifiedTime = 5;
+  bool IsPremium = 6;
+  string AudioKey = 8;
+  int64 BPM = 9;
+  string ChordType = 10;
+  string Dir = 11;
+  int64 Duration = 12;
+  string Genre = 13;
+  string PreviewURL = 14;
+  int64 Price = 15;
+  string ProviderName = 16;
+  string ProviderUuid = 17;
+  string ProviderPermalink = 18;
+  string SampleType = 19;
+  repeated string Tags = 20;
+  string WaveformURL = 21;
+  bool Published = 22;
+  int64 Popularity = 23;
+  int64 PublishedAt = 24;
+  int64 PurchasedAt = 25;
+  SamplePack Pack = 26;
+}
+
+message CollectionListSamplesResponse {
+  int32 TotalHits = 1;
+  repeated CollectionSample Samples = 2;
+}
+
+message Preset {
+  string UUID = 1;
+  string FileHash = 2;
+  string Filename = 3;
+  string LocalPath = 4;
+  repeated string Tags = 5;
+  int32 Price = 6;
+  bool IsDefault = 7;
+  int32 PluginDescriptionID = 8;
+  string PluginName = 9;
+  string PluginVersion = 10;
+  bool Published = 11;
+  int64 PublishedAt = 12;
+  string ProviderName = 13;
+  double Trending = 14;
+  string ProviderUuid = 15;
+  string ProviderPermalink = 16;
+  SamplePack Pack = 17;
+  string PreviewURL = 18;
+  string PreviewURLMonoG1 = 19;
+  string PreviewURLMonoG3 = 20;
+  string PreviewURLMonoG5 = 21;
+  string PreviewURLPolyG1 = 22;
+  string PreviewURLPolyG3 = 23;
+  string PreviewURLPolyG5 = 24;
+  int64 PurchasedAt = 25;
+}
+
+message PresetsListPurchasedRequest {
+  string SortFn = 1;
+  string SortOrder = 2;
+  int32 PerPage = 3;
+  int32 Page = 4;
+}
+
+message PresetsListPurchasedResponse {
+  int32 TotalHits = 1;
+  repeated Preset Presets = 2;
+}
+
+message PresetDownloadRequest {
+  string UUID = 1;
+}
+
+message PresetDownloadResponse {
+}
+
+message PresetsDownloadCancelRequest {
+}
+
+message PresetsDownloadCancelResponse {
+}
+
+message UnlicensedPresetDownloadRequest {
+  string UUID = 1;
+  string UnlicensedSignedS3Url = 2;
+  bool Temporary = 3;
+  string PluginName = 4;
+}
+
+message UnlicensedPresetDownloadResponse {
+  string Path = 1;
+}
+
+message PresetPurchaseRequest {
+  string UUID = 1;
+}
+
+message PresetPurchaseResponse {
+}
+
+message PresetInfoRequest {
+  string UUID = 1;
+  string FileHash = 2;
+  string PluginName = 3;
+}
+
+message PresetInfo {
+  string UUID = 1;
+  string FileHash = 2;
+  string LocalPath = 3;
+}
+
+message PresetInfoResponse {
+  PresetInfo Preset = 1;
+}
+
+enum FlagValueType {
+  Boolean = 0;
+  String = 1;
+}
+
+message FlagValue {
+  string name = 1;
+  FlagValueType type = 2;
+  bool boolValue = 3;
+  string stringValue = 4;
+}
+
+message UpdatedFlagsRequest {
+  repeated FlagValue flags = 1;
+}
+
+message UpdatedFlagsResponse {};
+
+message CountPresetsToCleanRequest {};
+message CountPresetsToCleanResponse {
+  int32 count = 1;
+}
+
+message CleanPresetsRequest {};
+message CleanPresetsResponse {
+  string path = 1;
+};
+
+message SyncPresetsRequest {};
+message SyncPresetsResponse {};
+
+service App {
+  rpc StreamEvents(stream Event) returns (stream Event);
+  rpc ValidateLogin(ValidateLoginRequest) returns (ValidateLoginResponse);
+  rpc LoggedIn(LoggedInRequest) returns (LoggedInResponse);
+  rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc ListSamples(ListSamplesRequest) returns (ListSamplesResponse);
+  rpc SearchSamples(SearchSampleRequest) returns (SearchSampleResponse);
+  rpc SampleInfo(SampleInfoRequest) returns (SampleInfoResponse);
+  rpc ListSamplePacks(ListSamplePacksRequest) returns (ListSamplePacksResponse);
+  rpc DownloadSample(DownloadSampleRequest) returns (DownloadSampleResponse);
+  rpc SyncSounds(SyncSoundsRequest) returns (SyncSoundsResponse);
+  rpc CancelSampleDownload(CancelSampleDownloadRequest) returns (CancelSampleDownloadResponse);
+  rpc InstallPlugin(InstallPluginRequest) returns (InstallPluginResponse);
+  rpc UpdatePlugin(UpdatePluginRequest) returns (UpdatePluginResponse);
+  rpc CancelPluginDownload(CancelPluginDownloadRequest) returns (CancelPluginDownloadResponse);
+  rpc UserPreferences(UserPreferencesRequest) returns (UserPreferencesResponse);
+  rpc UpdateUserPreferences(UpdateUserPreferencesRequest) returns (UpdateUserPreferencesResponse);
+  rpc DownloadLogs(DownloadLogsRequest) returns (DownloadLogsResponse);
+  rpc CopyFileToClipboard(CopyFileToClipboardRequest) returns (CopyFileToClipboardResponse);
+  rpc ConvertToWav(ConvertToWavRequest) returns (ConvertToWavResponse);
+  rpc ProjectDiskScan(ProjectDiskScanRequest) returns (ProjectDiskScanResponse);
+  rpc CancelProjectDiskScan(CancelProjectDiskScanRequest) returns (CancelProjectDiskScanResponse);
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
+  rpc ConvertSoundsTrial(ConvertSoundsTrialRequest) returns (ConvertSoundsTrialResponse);
+  rpc SendFeedback(SendFeedbackRequest) returns (SendFeedbackResponse);
+  rpc InstallAppFromChannel(InstallAppFromChannelRequest) returns (InstallAppFromChannelResponse);
+  rpc CollectionAdd(CollectionAddRequest) returns (CollectionAddResponse);
+  rpc CollectionAddItems(CollectionAddItemsRequest) returns (CollectionAddItemsResponse);
+  rpc CollectionsList(CollectionsListRequest) returns (CollectionsListResponse);
+  rpc CollectionUpdate(CollectionUpdateRequest) returns (CollectionUpdateResponse);
+  rpc CollectionDelete(CollectionDeleteRequest) returns (CollectionDeleteResponse);
+  rpc CollectionDeleteItems(CollectionDeleteItemsRequest) returns (CollectionDeleteItemsResponse);
+  rpc CollectionListSamples(CollectionListSamplesRequest) returns (CollectionListSamplesResponse);
+  rpc PresetsListPurchased(PresetsListPurchasedRequest) returns (PresetsListPurchasedResponse);
+  rpc PresetDownload(PresetDownloadRequest) returns (PresetDownloadResponse);
+  rpc UnlicensedPresetDownload(UnlicensedPresetDownloadRequest) returns (UnlicensedPresetDownloadResponse);
+  rpc PresetsDownloadCancel(PresetsDownloadCancelRequest) returns (PresetsDownloadCancelResponse);
+  rpc PresetPurchase(PresetPurchaseRequest) returns (PresetPurchaseResponse);
+  rpc PresetInfo(PresetInfoRequest) returns (PresetInfoResponse);
+  rpc UpdatedSession(UpdatedSessionRequest) returns (UpdatedSessionResponse);
+  rpc UpdatedFlags(UpdatedFlagsRequest) returns (UpdatedFlagsResponse);
+  rpc CountPresetsToClean(CountPresetsToCleanRequest) returns (CountPresetsToCleanResponse);
+  rpc CleanPresets(CleanPresetsRequest) returns (CleanPresetsResponse);
+  rpc SyncPresets(SyncPresetsRequest) returns (SyncPresetsResponse);
+}

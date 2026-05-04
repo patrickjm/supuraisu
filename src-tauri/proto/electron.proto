@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+import "app.proto";
+
+package proto;
+
+message Empty {}
+
+message HelperStartedMessageRequest {
+  int32 port = 1;
+}
+
+message HelperStartedMessageResponse {
+  string message = 1;
+}
+
+message GetElectronSessionResponse {
+  Auth auth = 1;
+  User user = 2;
+}
+
+service Electron {
+  rpc HelperStarted(HelperStartedMessageRequest) returns (HelperStartedMessageResponse);
+  rpc GetElectronSession(Empty) returns (GetElectronSessionResponse);
+  rpc Logout(Empty) returns (Empty);
+  rpc RefreshAuth(Empty) returns (Empty);
+}

@@ -1,0 +1,43 @@
+{
+  "name": "supuraisu",
+  "version": "0.1.0",
+  "description": "A better desktop client for legitimate Splice users",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "probe:helper": "cd src-tauri && cargo run --example probe_helper",
+    "probe:helper:js": "node scripts/probe-helper.mjs",
+    "tauri": "tauri",
+    "package:mac": "tauri build --bundles app,dmg",
+    "version:set": "node scripts/set-version.mjs",
+    "release:check": "bun run check && bun run build && cargo check --manifest-path src-tauri/Cargo.toml"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.10.1",
+    "lucide-svelte": "^1.0.1"
+  },
+  "devDependencies": {
+    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/proto-loader": "^0.8.0",
+    "@sveltejs/adapter-static": "^3.0.6",
+    "@sveltejs/kit": "^2.9.0",
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@tailwindcss/vite": "^4.2.4",
+    "@tauri-apps/cli": "^2",
+    "@types/node": "^25.6.0",
+    "daisyui": "^5.5.19",
+    "svelte": "^5.0.0",
+    "svelte-check": "^4.0.0",
+    "tailwindcss": "^4.2.4",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.3"
+  }
+}
