@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { listen } from "@tauri-apps/api/event";
   import { relaunch } from "@tauri-apps/plugin-process";
@@ -1100,6 +1101,24 @@
     if (nextTarget instanceof Node && event.currentTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
     openFilterDropdown = null;
   }
+
+  onMount(() => {
+    const closeOpenFilterOnOutsidePointer = (event: PointerEvent) => {
+      if (!openFilterDropdown) return;
+      const target = event.target;
+      if (target instanceof Element && target.closest(".filter-dropdown")) return;
+      openFilterDropdown = null;
+    };
+    const closeOpenFilterOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") openFilterDropdown = null;
+    };
+    document.addEventListener("pointerdown", closeOpenFilterOnOutsidePointer, true);
+    document.addEventListener("keydown", closeOpenFilterOnEscape, true);
+    return () => {
+      document.removeEventListener("pointerdown", closeOpenFilterOnOutsidePointer, true);
+      document.removeEventListener("keydown", closeOpenFilterOnEscape, true);
+    };
+  });
 
   function toggleFilterValue(key: "genres" | "instruments" | "keys", value: string) {
     const filters = activeFilters();
