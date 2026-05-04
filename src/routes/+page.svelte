@@ -1350,26 +1350,26 @@
               <SlidersHorizontal size={14} />
               Filters
             </div>
-            <div class="dropdown dropdown-bottom relative z-20">
-              <button class="filter-control btn btn-xs min-w-32 justify-between" class:filter-active={activeFilters().instruments.length > 0 || openFilterDropdown === "instruments"} onclick={(event) => toggleFilterDropdown("instruments", event)}>{multiLabel("Instrument", activeFilters().instruments)}</button>
+            <div class="filter-dropdown">
+              <button type="button" class="filter-control btn btn-xs min-w-32 justify-between" class:filter-active={activeFilters().instruments.length > 0 || openFilterDropdown === "instruments"} onclick={(event) => toggleFilterDropdown("instruments", event)}>{multiLabel("Instrument", activeFilters().instruments)}</button>
               {#if openFilterDropdown === "instruments"}
-                <div class="menu dropdown-content z-50 mt-1 w-44 rounded-box border border-base-300 bg-base-100 p-1 shadow-xl">
+                <div class="filter-menu menu w-44">
                   {#each instruments as item}<label class="label cursor-pointer justify-start gap-2 px-2 py-1 text-xs"><input type="checkbox" class="checkbox checkbox-xs checkbox-primary" checked={activeFilters().instruments.includes(item)} onchange={() => toggleFilterValue("instruments", item)} />{item}</label>{/each}
                 </div>
               {/if}
             </div>
-            <div class="dropdown dropdown-bottom relative z-20">
-              <button class="filter-control btn btn-xs min-w-28 justify-between" class:filter-active={activeFilters().genres.length > 0 || openFilterDropdown === "genres"} onclick={(event) => toggleFilterDropdown("genres", event)}>{multiLabel("Genre", activeFilters().genres)}</button>
+            <div class="filter-dropdown">
+              <button type="button" class="filter-control btn btn-xs min-w-28 justify-between" class:filter-active={activeFilters().genres.length > 0 || openFilterDropdown === "genres"} onclick={(event) => toggleFilterDropdown("genres", event)}>{multiLabel("Genre", activeFilters().genres)}</button>
               {#if openFilterDropdown === "genres"}
-                <div class="menu dropdown-content z-50 mt-1 w-44 rounded-box border border-base-300 bg-base-100 p-1 shadow-xl">
+                <div class="filter-menu menu w-44">
                   {#each genres as item}<label class="label cursor-pointer justify-start gap-2 px-2 py-1 text-xs"><input type="checkbox" class="checkbox checkbox-xs checkbox-primary" checked={activeFilters().genres.includes(item)} onchange={() => toggleFilterValue("genres", item)} />{item}</label>{/each}
                 </div>
               {/if}
             </div>
-            <div class="dropdown dropdown-bottom relative z-20">
-              <button class="filter-control btn btn-xs min-w-24 justify-between" class:filter-active={activeFilters().keys.length > 0 || openFilterDropdown === "keys"} onclick={(event) => toggleFilterDropdown("keys", event)}>{multiLabel("Key", activeFilters().keys)}</button>
+            <div class="filter-dropdown">
+              <button type="button" class="filter-control btn btn-xs min-w-24 justify-between" class:filter-active={activeFilters().keys.length > 0 || openFilterDropdown === "keys"} onclick={(event) => toggleFilterDropdown("keys", event)}>{multiLabel("Key", activeFilters().keys)}</button>
               {#if openFilterDropdown === "keys"}
-                <div class="menu dropdown-content z-50 mt-1 w-36 rounded-box border border-base-300 bg-base-100 p-1 shadow-xl">
+                <div class="filter-menu menu w-36">
                   {#each keys as item}<label class="label cursor-pointer justify-start gap-2 px-2 py-1 text-xs"><input type="checkbox" class="checkbox checkbox-xs checkbox-primary" checked={activeFilters().keys.includes(item)} onchange={() => toggleFilterValue("keys", item)} />{item}</label>{/each}
                 </div>
               {/if}
@@ -1803,6 +1803,24 @@
 
   .filter-control {
     box-shadow: none;
+  }
+
+  .filter-dropdown {
+    position: relative;
+    z-index: 60;
+  }
+
+  .filter-menu {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    z-index: 80;
+    max-height: min(18rem, calc(100vh - 12rem));
+    overflow-y: auto;
+    border: 1px solid var(--color-base-300);
+    border-radius: var(--radius-box);
+    background: var(--color-base-100);
+    box-shadow: 0 18px 40px color-mix(in oklab, black 18%, transparent);
   }
 
   .filter-control:hover,
