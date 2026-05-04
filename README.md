@@ -2,7 +2,7 @@
 
 Supuraisu is an alternative macOS desktop client for Splice. It focuses on fast browsing, library/likes/collections, reliable session persistence, downloading licensed samples, local playback, and native drag-out of downloaded audio files into DAWs.
 
-<img width="805" height="604" alt="image" src="https://github.com/user-attachments/assets/968b5491-0dfc-4c2f-a391-8f20e096e8a1" />
+<img width="867" height="664" alt="Greenshot 2026-05-04 11 15 39" src="https://github.com/user-attachments/assets/1b5bdbe5-556d-4cc6-8f98-45067681dce4" />
 
 ## Scope
 
