@@ -721,6 +721,7 @@
     try {
       const result = await invoke<{ requested: boolean; sample?: SampleSummary }>("download_splice_sample", {
         fileHash: sample.file_hash,
+        purchaseIfNeeded: !sample.purchased,
       });
       const updated = result.sample ? { ...sample, ...result.sample } : sample;
       updateSampleEverywhere(updated);

@@ -1242,9 +1242,16 @@ mod macos_file_drag {
 }
 
 #[tauri::command]
-async fn download_splice_sample(file_hash: String) -> Result<DownloadSampleResult, String> {
+async fn download_splice_sample(
+    file_hash: String,
+    purchase_if_needed: Option<bool>,
+) -> Result<DownloadSampleResult, String> {
     if file_hash.trim().is_empty() {
         return Err("file_hash is required".to_string());
+    }
+
+    if purchase_if_needed.unwrap_or(false) {
+        purchase_splice_sample(&file_hash).await?;
     }
 
     let (_port, mut client, _errors) = find_helper_client().await.map_err(|e| format!("{e:?}"))?;
@@ -1285,6 +1292,55 @@ async fn download_splice_sample(file_hash: String) -> Result<DownloadSampleResul
         requested: true,
         sample: last_sample.map(summarize_sample),
     })
+}
+
+async fn purchase_splice_sample(file_hash: &str) -> Result<(), String> {
+    let token = splice_access_token().await?;
+    let query = r#"
+      mutation AssetServicePurchaseAsset($uuid: GUID!, $type: AssetTypeSlug!) {
+        purchaseAsset(uuid: $uuid, legacy: { type: $type }) {
+          ... on IAsset {
+            uuid
+            licensed
+          }
+        }
+      }
+    "#;
+    let body = serde_json::json!({
+        "operationName": "AssetServicePurchaseAsset",
+        "query": query,
+        "variables": {
+            "uuid": file_hash,
+            "type": "sample",
+        }
+    });
+
+    let response: serde_json::Value = reqwest::Client::new()
+        .post("https://surfaces-graphql.splice.com/graphql")
+        .bearer_auth(token)
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| format!("Sample purchase request failed: {e}"))?
+        .error_for_status()
+        .map_err(|e| format!("Sample purchase HTTP error: {e}"))?
+        .json()
+        .await
+        .map_err(|e| format!("Sample purchase response parse failed: {e}"))?;
+
+    if let Some(errors) = response.get("errors") {
+        return Err(format!("Sample purchase returned errors: {errors}"));
+    }
+
+    let licensed = response
+        .pointer("/data/purchaseAsset/licensed")
+        .and_then(|value| value.as_bool())
+        .unwrap_or(false);
+    if !licensed {
+        return Err("Sample purchase response did not confirm licensing".to_string());
+    }
+
+    Ok(())
 }
 
 #[tauri::command]
